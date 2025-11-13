@@ -1,5 +1,5 @@
 ﻿# Project Manager
-## Version 1.013
+## Version 1.014
 ### Author: Arnaud Cassone © Artcraft Visuals
 This is a TouchDesigner project configurator tool that helps manage project dependencies, configurations, and repositories. 
 It provides an easy way to set up and maintain a TouchDesigner projects with the necessary packages and settings.

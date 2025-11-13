@@ -80,15 +80,35 @@ class ProjectManagerExt:
 		op.Logger.Info(me,"Setup Project Manager...")
 		self.State = 'Setup'
 		self.InitializeLogger()
-
+		self.CheckGitignore()
 		self.UpdateLibraries()
 		op.Logger.Info(me,"Project Manager Ready.")
 		self.State = 'Ready'
 		pass
 	
+	def CheckGitignore(self):
+		# Check if .gitignore file exists in the project folder
+		# ignore iterations (projectname.4.toe) to projectname.toe
+		
+		gitignorePath = os.path.join(project.folder, '.gitignore')
+		projectName = project.name.split('.')[0].strip()
+
+
+		if not os.path.exists(gitignorePath):
+			# create a .gitignore file
+			with open(gitignorePath, 'w') as f:
+				f.write('*.toe\n')
+				f.write('!' + projectName + '.toe\n')
+				f.write('Logs/\n')
+				f.write('Backup/*')
+			op.Logger.Info(me,".gitignore file created at: {}".format(gitignorePath))
+		else:
+			op.Logger.Info(me,".gitignore file already exists at: {}".format(gitignorePath))
+		pass
+	
 	def InitializeLogger(self):
 		# Initialize the logger
-		op.Logger.par.Logfolder = project.folder + '/Logs'
+		op.Logger.par.Logfolder = project.folder + '/Logs' 
 		op.Logger.par.Active = True
 		op.Logger.par.Logtofile = True
 		op.Logger.allowCooking = True
