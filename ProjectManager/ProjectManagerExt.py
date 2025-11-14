@@ -13,6 +13,16 @@ import subprocess
 import socket 
 import datetime
 import json
+import http.server
+import socketserver
+import requests
+import threading
+import time
+
+import os
+import signal
+import sys
+
 
 class ProjectManagerExt:
 	"""
@@ -69,26 +79,22 @@ class ProjectManagerExt:
 		else:
 			self.Setup()
 
-
-
- 
-
 	def OpensaveDialog(self):
 		# open the save dialog
 		op('Dialogs/ProjectSaveDialog').par.Open.pulse()
 
-
 	def SavePropject(self):
 		# save the current project
 		project.save()
-	 
-
+ 
 	def Setup(self):
 		op.Logger.Info(me,"Setup Project Manager...")
 		self.State = 'Setup'
 		self.InitializeLogger()
+		self.CheckConfig()
 		self.CheckGitignore()
 		self.UpdateLibraries()
+		self.CheckDependencies()
 		self.GetSystemInfo()
 		op.Logger.Info(me,"Project Manager Ready.") 
 		self.State = 'Ready'
@@ -125,11 +131,42 @@ class ProjectManagerExt:
 
 		op.Logger.Info(me,"System IP Addresses: {}".format(Addresses)) 
 
+	def CheckConfig(self):
+		# Check if the config file is present, if not create it
+		ProjConfig = self.ownerComp
+		configFilePath = project.folder + '/config.json'
+		if os.path.exists(configFilePath):
+			op.Logger.Info(me,"Config file found: {}".format(configFilePath))
+			self.LoadConfig()
+		else:
+			
+			self.SaveConfig()
+
+	def SaveConfig(self):
+		# Save the current configuration to a json file
+		ProjConfig = self.ownerComp
+		config = {
+			"Project": project.name.split('.')[0].strip(),
+			"ToolsPath": ProjConfig.par.Libraries.eval(),
+			"LogPath": op.Logger.par.Logfolder.eval(),
+			"TouchDesignerVersion": app.build,
+			"Properties": {}
+			
+		}
+		configFilePath = project.folder + '/config.json'
+		try:
+			with open(configFilePath, 'w') as configFile:
+				json.dump(config, configFile, indent=4)
+		except Exception as e:
+			op.Logger.Error(me,"Failed to save config file: {}".format(e))
+			return
+		op.Logger.Info(me,"Config file saved: {}".format(configFilePath))
+
 	def CheckGitignore(self):
 		# Check if .gitignore file exists in the project folder
 		# ignore iterations (projectname.4.toe) to projectname.toe
 		
-		gitignorePath = os.path.join(project.folder, '.gitignore')
+		gitignorePath = os.path.join(project.folder, '.gitignore') 
 		projectName = project.name.split('.')[0].strip()
 
 
@@ -139,10 +176,11 @@ class ProjectManagerExt:
 				f.write('*.toe\n')
 				f.write('!' + projectName + '.toe\n')
 				f.write('Logs/\n')
-				f.write('Backup/*')
-			op.Logger.Info(me,".gitignore file created at: {}".format(gitignorePath))
+				f.write('Backup/*\n')
+				f.write('config.json\n')
+			op.Logger.Info(me,".gitignore file created")
 		else:
-			op.Logger.Info(me,".gitignore file already exists at: {}".format(gitignorePath))
+			op.Logger.Info(me,"Project .gitignore exists")
 		pass
 	
 	def InitializeLogger(self):
@@ -163,7 +201,6 @@ class ProjectManagerExt:
 		op.Logger.Info(me,"Logger Initialized.")
 		pass
 	
-
 	def UpdateLibraries(self):
 		# Update the project library path
 		self.ProjectLibPath = parent().par.Libraries.eval()
@@ -186,7 +223,8 @@ class ProjectManagerExt:
 				elif folder.lower().find('terrain-tools') != -1:
 					self.TerrainTools = "Ready"
 		
-		self.CheckDependencies()
+		op.Logger.Info(me,"Libraries Checked")
+		
 		pass
 
 	def CheckDependencies(self):
@@ -216,11 +254,8 @@ class ProjectManagerExt:
 					op.Logger.Info(me,"Failed to install Git: {}".format(e))
 					return
 				
-		 
+		op.Logger.Info(me,"All dependencies are met.")
 		
-			
-		
-
 	def DownloadLibrary(self, libName):
 		# Download the specified library from Github
 		import git
@@ -274,15 +309,14 @@ class ProjectManagerExt:
 
 		
 		pass
-
-
+	
 	def LogMessage(self, info):
 		# Log message to WebLogger if available
 		if hasattr(op, 'WebLogger'):
 			date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 			level = info['logItemDict']['level']
 			message = info['logItemDict']['message'] #Raw message
-			traceback = message.split('-')[0].strip().split('path:')[1].strip() # Extract the operator path from the message
+			traceback = message.split('-')[0].strip().split('path:')[1].strip()
 			node = op(traceback) # Get the operator from the path
 			node = node.name # Get the operator name
 			text = message.split('-')[1].strip() # Extract the actual log message
@@ -291,3 +325,6 @@ class ProjectManagerExt:
 			# Send the log message to WebLogger via WebSocket
 			op.WebLogger.op('webserver1').webSocketSendText(op.WebLogger.op('table_clients')[1,0], json.dumps(infos))
 			return
+		
+
+

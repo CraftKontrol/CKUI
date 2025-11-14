@@ -1,11 +1,19 @@
 ﻿# Project Manager
-## Version 1.015
+## Version 1.02
 ### Author: Arnaud Cassone © Artcraft Visuals
-This is a TouchDesigner project configurator tool that helps manage project dependencies, configurations, and repositories. 
+It's a TouchDesigner project configurator tool that helps manage project dependencies, configurations, and repositories. 
 It provides an easy way to set up and maintain a TouchDesigner projects with the necessary packages and settings.
 
-
-
+It does the following:
+- Check for saved project location / Open Popup to set project location if not found
+- Check for Logger installation paths / Set Logger path if not found
+- Check for config.json file / Create config.json file if not found
+- Check for WebLogger module installation
+- Check for gitignore file / Create gitignore file if not found
+- Check for git installation / Install git if not found
+- Check for libraries folder
+- Clone required libraries on demand
+- Show IP addresses for local network access
 
 ## Parameters
 | Parameter | Type | Description |
