@@ -4,11 +4,15 @@ Author: Arnaud Cassone / CraftKontrol
 It manages project setup, library paths, and dependencies.
 """
 
+import json
 from TDStoreTools import StorageManager
 import TDFunctions as TDF
 import os
 import pip
 import subprocess
+import socket 
+import datetime
+import json
 
 class ProjectManagerExt:
 	"""
@@ -22,6 +26,7 @@ class ProjectManagerExt:
 		TDF.createProperty(self, 'PythonPath', value='Unknown', dependable=True,readOnly=False)
 		TDF.createProperty(self, 'ProjectLibPath', value='Unknown', dependable=True,readOnly=False)
 		TDF.createProperty(self, 'Logger', value='Unknown', dependable=True,readOnly=False)
+		TDF.createProperty(self, 'IpAddresses', value=[], dependable=True,readOnly=False)
 		TDF.createProperty(self, 'CKUI', value='Unknown', dependable=True,readOnly=False)
 		TDF.createProperty(self, 'CKTDLibrary', value='Unknown', dependable=True,readOnly=False)
 		TDF.createProperty(self, 'GGEN', value='Unknown', dependable=True,readOnly=False)
@@ -51,6 +56,8 @@ class ProjectManagerExt:
 
 	def OnStart(self):
 		
+
+
 		# set main project name to the Overall CKUI System name
 		if op('/project1') is not None:
 			op('/project1').name = 'MainProject'
@@ -58,7 +65,7 @@ class ProjectManagerExt:
 		
 		# open a popup window to choose a project folder and name
 		if 'NewProject' in project.name:
-			self.OpensaveDialog()
+			self.OpensaveDialog()  
 		else:
 			self.Setup()
 
@@ -82,10 +89,42 @@ class ProjectManagerExt:
 		self.InitializeLogger()
 		self.CheckGitignore()
 		self.UpdateLibraries()
-		op.Logger.Info(me,"Project Manager Ready.")
+		self.GetSystemInfo()
+		op.Logger.Info(me,"Project Manager Ready.") 
 		self.State = 'Ready'
 		pass
 	
+	def GetLocalIP(self):
+		hostname = socket.gethostname()    
+		IPAddr4 = socket.gethostbyname_ex(hostname)  
+		Addresses = []
+		for addr in IPAddr4[2]:
+			if '.' in addr:
+				Addresses.append(addr)
+		return Addresses
+	
+	def GetSystemInfo(self):
+		Addresses = self.GetLocalIP()
+		# Check if parameters exists then delete them
+		for par in parent().pars():
+			if par.name.startswith('Ipaddress'):
+				par.destroy()
+
+		IpAddresses = [] 
+		# Store IP addresses in the list
+		for i, addr in enumerate(Addresses):
+			self.IpAddresses.append(addr)
+
+		# Create parameters for each IP address
+		for i in range(len(self.IpAddresses)): 
+			ipPar = parent().customPages[0].appendStr('Ipaddress'+ str(i+1))
+			ipPar.default = self.IpAddresses[i]
+			ipPar.reset() 
+			ipPar.readOnly = True 
+			ipPar.order = 4
+
+		op.Logger.Info(me,"System IP Addresses: {}".format(Addresses)) 
+
 	def CheckGitignore(self):
 		# Check if .gitignore file exists in the project folder
 		# ignore iterations (projectname.4.toe) to projectname.toe
@@ -107,9 +146,16 @@ class ProjectManagerExt:
 		pass
 	
 	def InitializeLogger(self):
+		
+		# Check if WebLogger is present
+		if hasattr(op, 'WebLogger'): 
+			pass
+		
+  
+
 		# Initialize the logger
 		op.Logger.par.Logfolder = project.folder + '/Logs' 
-		op.Logger.par.Active = True
+		op.Logger.par.Active = True 
 		op.Logger.par.Logtofile = True
 		op.Logger.allowCooking = True
 		
@@ -170,7 +216,7 @@ class ProjectManagerExt:
 					op.Logger.Info(me,"Failed to install Git: {}".format(e))
 					return
 				
-		
+		 
 		
 			
 		
@@ -230,3 +276,18 @@ class ProjectManagerExt:
 		pass
 
 
+	def LogMessage(self, info):
+		# Log message to WebLogger if available
+		if hasattr(op, 'WebLogger'):
+			date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+			level = info['logItemDict']['level']
+			message = info['logItemDict']['message'] #Raw message
+			traceback = message.split('-')[0].strip().split('path:')[1].strip() # Extract the operator path from the message
+			node = op(traceback) # Get the operator from the path
+			node = node.name # Get the operator name
+			text = message.split('-')[1].strip() # Extract the actual log message
+			# format the info dict to send to WebLogger in json
+			infos = {"type": "error", "errorType": level, "errorMsg": text, "errorSrc": node, "traceback": traceback, "date": date}
+			# Send the log message to WebLogger via WebSocket
+			op.WebLogger.op('webserver1').webSocketSendText(op.WebLogger.op('table_clients')[1,0], json.dumps(infos))
+			return
