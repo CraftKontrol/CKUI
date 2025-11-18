@@ -5,6 +5,7 @@ It manages project setup, library paths, and dependencies.
 """
 
 import json
+from threading import local
 from TDStoreTools import StorageManager
 import TDFunctions as TDF
 import os
@@ -13,14 +14,8 @@ import subprocess
 import socket 
 import datetime
 import json
-import http.server
-import socketserver
-import requests
-import threading
-import time
-
+import urllib.request
 import os
-import signal
 import sys
 
 
@@ -34,7 +29,9 @@ class ProjectManagerExt:
 		# properties
 		TDF.createProperty(self, 'State', value='Startup', dependable=True,readOnly=False)
 		TDF.createProperty(self, 'PythonPath', value='Unknown', dependable=True,readOnly=False)
-		TDF.createProperty(self, 'ProjectLibPath', value='Unknown', dependable=True,readOnly=False)
+		TDF.createProperty(self, 'VenvStatus', value='Unknown', dependable=True,readOnly=False)
+		TDF.createProperty(self, 'VenvPath', value='Unknown', dependable=True,readOnly=False)
+		TDF.createProperty(self, 'VenvPythonExe', value='Unknown', dependable=True,readOnly=False)
 		TDF.createProperty(self, 'Logger', value='Unknown', dependable=True,readOnly=False)
 		TDF.createProperty(self, 'IpAddresses', value=[], dependable=True,readOnly=False)
 		TDF.createProperty(self, 'CKUI', value='Unknown', dependable=True,readOnly=False)
@@ -66,7 +63,24 @@ class ProjectManagerExt:
 
 	def OnStart(self):
 		
-
+		# check if venv is active
+		venvFolder = parent().par.Venvfolder.eval()
+		if os.path.exists(venvFolder):
+			op.Logger.Info(me,"Virtual environment folder found at: {}".format(venvFolder))
+			try:
+				venvPythonExe = os.path.join(venvFolder, 'Scripts', 'python.exe')
+				result = subprocess.run([venvPythonExe, '--version'], capture_output=True, text=True, check=True)
+				venvPythonVersion = result.stdout.strip()
+				op.Logger.Info(me, f"Virtual environment Python version: {venvPythonVersion}")
+			except Exception as e:
+				op.Logger.Warning(me, f"Failed to get Python version from venv: {e}")
+				venvPythonVersion = 'Unknown'
+		
+			self.VenvStatus = venvPythonVersion  + " in /" + venvFolder
+			self.VenvPythonExe = os.path.join(venvFolder, 'Scripts', 'python.exe')
+		else:
+			op.Logger.Warning(me,"Virtual environment not found at: {}".format(venvFolder))
+			self.VenvStatus = 'not Found'
 
 		# set main project name to the Overall CKUI System name
 		if op('/project1') is not None:
@@ -137,7 +151,6 @@ class ProjectManagerExt:
 		configFilePath = project.folder + '/config.json'
 		if os.path.exists(configFilePath):
 			op.Logger.Info(me,"Config file found: {}".format(configFilePath))
-			self.LoadConfig()
 		else:
 			
 			self.SaveConfig()
@@ -224,7 +237,6 @@ class ProjectManagerExt:
 					self.TerrainTools = "Ready"
 		
 		op.Logger.Info(me,"Libraries Checked")
-		
 		pass
 
 	def CheckDependencies(self):
@@ -326,5 +338,171 @@ class ProjectManagerExt:
 			op.WebLogger.op('webserver1').webSocketSendText(op.WebLogger.op('table_clients')[1,0], json.dumps(infos))
 			return
 		
+	def DownloadInstallPython(self, version):
+		# Download and install the specified Python version
+		if version == "":
+			return
+		
+
+		#check if thsis version is already installed in LOCALAPPDATA or in PROGRAMFILES
+		local = os.path.join(os.getenv('LOCALAPPDATA'), 'Programs', 'Python', 'Python' + str(version).replace('.', '')[:-1])
+		programs = os.path.join(os.getenv('PROGRAMFILES'), 'Python' + str(version).replace('.', '')[:-1])
+
+		localExists = os.path.exists(local)
+		programsExists = os.path.exists(programs)
+
+		# check if is on PATH
+		sysPath = os.environ['PATH']
+
+		if not localExists and not programsExists:
+			op.Logger.Info(me,f"Python {version} is not installed, Downloading and Installing...")
+			
+			# Determine the download URL based on win 64bit
+			downloadURL = f"https://www.python.org/ftp/python/{sys.version}/python-{sys.version}-amd64.exe"
+			installerPath = os.path.join(os.getenv('TEMP'), f'python-{sys.version}-amd64.exe')
+			try:
+				# Download the installer
+				urllib.request.urlretrieve(downloadURL, installerPath)
+				op.Logger.Info(me,f"Downloaded Python {version} installer.")
+				
+				# Run the installer silently
+				subprocess.run([installerPath, 'InstallAllUsers=1', 'PrependPath=1'], check=True)
+				op.Logger.Info(me,f"Python {version} installed successfully.")
+
+				
+			except Exception as e:
+				op.Logger.Error(me,f"Failed to download or install Python {version}: {e}")
+
+		else:
+			op.Logger.Info(me,f"Python {version} is already installed.")
+		# check add to PATH
+		if localExists:
+			if local in sysPath:
+				op.Logger.Info(me,f"Python {version} is already on PATH.")
+			else:
+				op.Logger.Info(me,f"Python {version} is not on PATH, Adding...")
+				# add it to PATH
+				os.environ['PATH'] += ';' + local
+		if programsExists:
+			if programs in sysPath:
+				op.Logger.Info(me,f"Python {version} is already on PATH.")
+			else:
+				op.Logger.Info(me,f"Python {version} is not on PATH, Adding...")
+				# add it to PATH
+				os.environ['PATH'] += ';' + programs
+
+		self.find_all_python_executables()
+		
+		pass
+
+	def find_all_python_executables(self):
+		
+		possible_paths = [
+			f"C:/Python{sys.version_info.major}{sys.version_info.minor}/python.exe",
+			f"C:/Program Files/Python{sys.version_info.major}{sys.version_info.minor}/python.exe",
+			f"C:/Program Files (x86)/Python{sys.version_info.major}{sys.version_info.minor}/python.exe",
+			f"C:/Users/{os.getlogin()}/AppData/Local/Programs/Python/Python{sys.version_info.major}{sys.version_info.minor}/python.exe",
+		]
+
+		path_env = os.environ.get('PATH', '')
+
+		for path in path_env.split(os.pathsep):
+			python_exe_path = os.path.join(path, 'python.exe')
+			if os.path.isfile(python_exe_path):
+				possible_paths.append(python_exe_path)
+
+			python_executables = [path for path in possible_paths if os.path.exists(path)]
+			self.ownerComp.par.Version.menuNames = python_executables
+
+			python_labels = []
+		for path in python_executables:
+			if 'Python' in path:
+				python_labels.append('Python' + path.split('Python')[-1].split('/')[0])
+			else:
+				python_labels.append(os.path.basename(path))
+			self.ownerComp.par.Version.menuLabels = python_labels
+
+	def CreateVenv(self):
+		
+		version = parent().par.Version.eval() # ex python39/python.exe
+		#check if thsis version is already installed in LOCALAPPDATA or in PROGRAMFILES
+		possible_paths = [
+			f"C:/Program Files/",
+			f"C:/Users/{os.getlogin()}/AppData/Local/Programs/Python/",
+		]
+
+		#check if version is on possible paths
+		pythonExe = 'Unknown'
+		for basePath in possible_paths:
+			pythonPath = os.path.join(basePath, version)
+			
+			if os.path.exists(pythonPath):
+				pythonExe = pythonPath
+				break
+
+		if pythonExe == 'Unknown':
+			op.Logger.Warning(me,"Desired Python version not found: {}".format(version))
+			self.VenvStatus = 'Failed'
+			return
+		
+		# create the venv
+
+		venvFolder = parent().par.Venvfolder.eval()
+		if venvFolder == '':
+			op.Logger.Warning(me,"Venv folder name is empty.")
+			return
+		venvPath = os.path.join(project.folder, venvFolder)
+		if not os.path.exists(venvPath):
+			op.Logger.Info(me,"Creating virtual environment at: {}".format(venvPath))
+			try:
+				subprocess.run([pythonPath, '-m', 'venv', venvPath], check=True)
+				op.Logger.Info(me,"Virtual environment created successfully.")
+				self.VenvStatus = 'Ready'
+			except Exception as e:
+				op.Logger.Error(me,"Failed to create virtual environment: {}".format(e))
+		else:
+			op.Logger.Info(me,"Virtual environment already exists at: {}".format(venvPath))
+			self.VenvStatus = 'Ready'
+
+		self.VenvPythonExe = os.path.join(venvFolder, 'Scripts', 'python.exe')
 
 
+			# add it to PATH
+		if venvPath not in os.environ['PATH']:
+			os.environ['PATH'] += ';' + venvPath
+			op.Logger.Info(me,"Virtual environment added to PATH.")
+			#add scripts folder too
+			os.environ['PATH'] += ';' + os.path.join(venvPath, 'Scripts')
+		try:
+			venvPythonExe = os.path.join(venvFolder, 'Scripts', 'python.exe')
+			result = subprocess.run([venvPythonExe, '--version'], capture_output=True, text=True, check=True)
+			venvPythonVersion = result.stdout.strip()
+			op.Logger.Info(me, f"Virtual environment Python version: {venvPythonVersion}")
+			self.VenvStatus = venvPythonVersion + " in /" + venvFolder
+		except Exception as e:
+			op.Logger.Warning(me, f"Failed to get Python version from venv: {e}")
+			venvPythonVersion = 'Unknown'
+
+		
+		#Install pip in the venv
+		try:
+			subprocess.run([self.VenvPythonExe, '-m', 'ensurepip'], check=True)
+			op.Logger.Info(me,"pip installed in virtual environment.")
+		except Exception as e:
+			op.Logger.Error(me,"Failed to install pip in virtual environment: {}".format(e))
+		
+
+
+
+
+	def PipInstallPackage(self, packageName):
+		# Install the specified package in the virtual environment
+		packageName = str(packageName)
+		if self.VenvPythonExe == 'Unknown':
+			op.Logger.Warning(me,"Virtual environment Python executable not found.")
+			return
+		try:
+			subprocess.run([self.VenvPythonExe, '-m', 'pip', 'install', packageName], check=True)
+			op.Logger.Info(me,"Package {} installed successfully in virtual environment.".format(packageName))
+		except Exception as e:
+			op.Logger.Error(me,"Failed to install package {}: {}".format(packageName, e))
