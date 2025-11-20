@@ -163,6 +163,7 @@ class ProjectManagerExt:
 			"ToolsPath": ProjConfig.par.Libraries.eval(),
 			"LogPath": op.Logger.par.Logfolder.eval(),
 			"TouchDesignerVersion": app.build,
+			"Modules": {},
 			"Properties": {}
 			
 		}
@@ -490,10 +491,6 @@ class ProjectManagerExt:
 			op.Logger.Info(me,"pip installed in virtual environment.")
 		except Exception as e:
 			op.Logger.Error(me,"Failed to install pip in virtual environment: {}".format(e))
-		
-
-
-
 
 	def PipInstallPackage(self, packageName):
 		# Install the specified package in the virtual environment
