@@ -190,8 +190,14 @@ class ProjectManagerExt:
 				f.write('*.toe\n')
 				f.write('!' + projectName + '.toe\n')
 				f.write('Logs/\n')
+				f.write('log/\n')
 				f.write('Backup/*\n')
 				f.write('config.json\n')
+				f.write('custom_operators.tox\n')
+				f.write('*.bak\n')
+				f.write('*.dmp\n')
+				f.write('*.pyc\n')
+				
 			op.Logger.Info(me,".gitignore file created")
 		else:
 			op.Logger.Info(me,"Project .gitignore exists")
