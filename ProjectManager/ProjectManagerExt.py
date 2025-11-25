@@ -38,6 +38,7 @@ class ProjectManagerExt:
 		TDF.createProperty(self, 'CKTDLibrary', value='Unknown', dependable=True,readOnly=False)
 		TDF.createProperty(self, 'GGEN', value='Unknown', dependable=True,readOnly=False)
 		TDF.createProperty(self, 'TerrainTools', value='Unknown', dependable=True,readOnly=False)
+		TDF.createProperty(self, 'CKUIColor', value=(0,0.5,1), dependable=True,readOnly=False)
 		# attributes:
 		self.a = 0 # attribute
 		self.B = 1 # promoted attribute
@@ -110,6 +111,7 @@ class ProjectManagerExt:
 		self.UpdateLibraries()
 		self.CheckDependencies()
 		self.GetSystemInfo()
+		self.SetColors()
 		op.Logger.Info(me,"Project Manager Ready.") 
 		self.State = 'Ready'
 		pass
@@ -509,3 +511,35 @@ class ProjectManagerExt:
 			op.Logger.Info(me,"Package {} installed successfully in virtual environment.".format(packageName))
 		except Exception as e:
 			op.Logger.Error(me,"Failed to install package {}: {}".format(packageName, e))
+
+	def SetColors(self):
+		# Set colors of all nodes in the project to CKUIColor
+		# not for nodes inside components named 'Content'
+		# not for nodes inside components with tag 'CKLib'
+		# recursively exclude those nodes
+		ckColor = self.CKUIColor
+		for node in op('/MainProject').findChildren():
+			exclude = False
+			if 'CKLib' in node.tags:
+				exclude = True
+			parentComp = node.parent()
+			try:
+				while parentComp is not None:
+					if parentComp.name == 'Content' or 'CKLib' in parentComp.tags:
+						exclude = True
+						break
+					parentComp = parentComp.parent()
+			except:
+				pass
+			if not exclude:
+				# Set the node color
+				node.color = ckColor
+
+				# set Icon color if exists
+				if node.name == 'ico':
+					node.par.fontcolorr = ckColor[0]
+					node.par.fontcolorg = ckColor[1]
+					node.par.fontcolorb = ckColor[2]
+			
+		
+
