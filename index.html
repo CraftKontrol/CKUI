@@ -107,11 +107,13 @@ When answering questions:
 - Read all the relevant wiki sections before answering.
 - Only respond when directly asked questions about CKUI or cooking recipes.
 - Base all answers exclusively on the provided wiki pages parameters and topics or cooking recipes.
-- Add images or code snippets when relevant.
+- ALWAYS provide step-by-step numbered instructions when explaining how to do something. Use numbered lists (1., 2., 3., etc.) for sequential steps.
+- Include images from the wiki content when available using HTML img tags: <img src="URL" alt="description">
+- Preserve and display code snippets using <pre><code> tags for proper formatting.
 - Always include relevant links to wiki sections in html format or cooking recipe sources.
-- Do not use markdown format in your answers.
-- Provide step-by-step guides when possible.
+- Do not use markdown format in your answers. Use HTML tags instead.
 - Keep responses focused and accurate to the documentation or cooking recipes.
+- When wiki content includes images, include them in your response to help illustrate the instructions.
 `;
 
         let conversationHistory = [];
@@ -191,26 +193,97 @@ When answering questions:
             "web logger": "WebLogger"
         };
 
-        // Util: Find matching wiki topic
-        function findWikiTopic(query) {
-            const topic = Object.keys(CKUI_WIKI_TOPICS).find((key) =>
-                query.toLowerCase().includes(key)
+        // Util: Find matching wiki topic(s) - returns array of topics
+        function findWikiTopics(query) {
+            const lowerQuery = query.toLowerCase();
+            const matchedTopics = Object.keys(CKUI_WIKI_TOPICS).filter((key) =>
+                lowerQuery.includes(key)
             );
-            return topic ? CKUI_WIKI_TOPICS[topic] : null;
+            return matchedTopics.map(topic => CKUI_WIKI_TOPICS[topic]);
+        }
+
+        // Util: Find single matching wiki topic (for backward compatibility)
+        function findWikiTopic(query) {
+            const topics = findWikiTopics(query);
+            return topics.length > 0 ? topics[0] : null;
+        }
+
+        // Util: Extract images from markdown content and convert to HTML
+        function extractImagesFromMarkdown(content) {
+            // Match markdown image syntax: ![alt](url)
+            const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+            // Also match HTML img tags that might already be in the content
+            const htmlImgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']*)["'][^>]*>/gi;
+            
+            const images = [];
+            let match;
+            
+            // Extract markdown images
+            while ((match = imageRegex.exec(content)) !== null) {
+                images.push({
+                    alt: match[1] || 'Image',
+                    url: match[2]
+                });
+            }
+            
+            // Extract existing HTML images with alt text
+            while ((match = htmlImgRegex.exec(content)) !== null) {
+                images.push({
+                    alt: match[2] || 'Image',
+                    url: match[1]
+                });
+            }
+            
+            return images;
+        }
+
+        // Util: Convert markdown images to HTML in content
+        function convertMarkdownImagesToHtml(content) {
+            // Convert markdown images ![alt](url) to HTML <img src="url" alt="alt">
+            // Styling is handled by CSS class .message-content img
+            return content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
         }
 
         // Util: Fetch wiki raw content using GitHub API for public wiki pages
+        // Now preserves images and returns enhanced content with images converted to HTML
         async function fetchWikiContent(page) {
             const url = `https://raw.githubusercontent.com/wiki/CraftKontrol/CKUI/${page}.md`;
             try {
                 const response = await fetch(url);
                 if (response.ok) {
-                    return await response.text();
+                    let content = await response.text();
+                    // Extract images before any processing
+                    const images = extractImagesFromMarkdown(content);
+                    // Convert markdown images to HTML for better display
+                    content = convertMarkdownImagesToHtml(content);
+                    return {
+                        content: content,
+                        images: images
+                    };
                 }
-                return '';
+                return { content: '', images: [] };
             } catch {
-                return '';
+                return { content: '', images: [] };
             }
+        }
+
+        // Util: Fetch multiple wiki pages and combine their content
+        async function fetchMultipleWikiContents(pages) {
+            const results = await Promise.all(pages.map(page => fetchWikiContent(page)));
+            let combinedContent = '';
+            let allImages = [];
+            
+            results.forEach((result, index) => {
+                if (result.content) {
+                    combinedContent += `\n\n=== ${pages[index]} ===\n${result.content}`;
+                    allImages = allImages.concat(result.images);
+                }
+            });
+            
+            return {
+                content: combinedContent,
+                images: allImages
+            };
         }
 
         // Auto-resize textarea
@@ -299,26 +372,46 @@ When answering questions:
         }
 
         // Updated to inject wiki content before API call, if relevant
+        // Now supports multiple wiki topics and includes images
         async function callMistralAPI(apiKey, userMessage) {
-            let wikiReference = '';
+            let wikiReferences = [];
             let wikiContext = '';
+            let wikiImages = [];
 
-            // 1. Detect if the user is referencing a wiki topic.
-            const topicPage = findWikiTopic(userMessage);
-            if (topicPage) {
-                wikiReference = `https://github.com/CraftKontrol/CKUI/wiki/${topicPage}`;
-                wikiContext = await fetchWikiContent(topicPage);
+            // 1. Detect if the user is referencing wiki topic(s) - now supports multiple topics
+            const topicPages = findWikiTopics(userMessage);
+            
+            if (topicPages.length > 0) {
+                // Fetch content for all matched topics
+                const wikiResult = await fetchMultipleWikiContents(topicPages);
+                wikiContext = wikiResult.content;
+                wikiImages = wikiResult.images;
+                
+                // Build references for all matched topics
+                wikiReferences = topicPages.map(page => 
+                    `https://github.com/CraftKontrol/CKUI/wiki/${page}`
+                );
+                
                 if (wikiContext) {
-                    // Limit context size for the LLM
-                    wikiContext = wikiContext.slice(0, 3000);
+                    // Increased context size limit from 3000 to 8000 characters
+                    wikiContext = wikiContext.slice(0, 8000);
                 }
+            }
+
+            // Build image context for the AI
+            let imageContext = '';
+            if (wikiImages.length > 0) {
+                imageContext = '\n\nAvailable images from wiki (include relevant ones in your response using HTML img tags):\n';
+                wikiImages.forEach((img, index) => {
+                    imageContext += `Image ${index + 1}: <img src="${img.url}" alt="${img.alt}">\n`;
+                });
             }
 
             const messages = [
                 {
                     role: 'system',
                     content: CKUI_CONTEXT + (wikiContext
-                        ? `\n\nCKUI Wiki Content for "${topicPage}":\n\n${wikiContext}\n\nWiki Reference: ${wikiReference}\n`
+                        ? `\n\nCKUI Wiki Content for "${topicPages.join(', ')}":\n\n${wikiContext}${imageContext}\n\nWiki References: ${wikiReferences.join(', ')}\n`
                         : ''
                     )
                 },
@@ -335,7 +428,7 @@ When answering questions:
                     model: 'mistral-small-latest',
                     messages: messages,
                     temperature: 0.7,
-                    max_tokens: 1024
+                    max_tokens: 2048
                 })
             });
 
@@ -358,9 +451,16 @@ When answering questions:
             }
             
             let answer = data.choices[0].message.content;
-            // Optionally append the direct wiki link to the assistant's response
-            if (wikiReference && !answer.includes(wikiReference)) {
-                answer += `<br><br>See the official wiki page: <a href="${wikiReference}">${wikiReference}</a>`;
+            
+            // Append the direct wiki links to the assistant's response
+            if (wikiReferences.length > 0) {
+                const missingRefs = wikiReferences.filter(ref => !answer.includes(ref));
+                if (missingRefs.length > 0) {
+                    answer += '<br><br>See the official wiki page(s):<br>';
+                    missingRefs.forEach(ref => {
+                        answer += `<a href="${ref}" target="_blank">${ref}</a><br>`;
+                    });
+                }
             }
             return answer;
         }
@@ -389,10 +489,20 @@ When answering questions:
         function formatMessage(content) {
             // Convert markdown-style content to HTML
             let formatted = content
+                // Convert markdown images ![alt](url) to HTML img tags
+                .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
+                // Convert code blocks
                 .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+                // Convert inline code
                 .replace(/`([^`]+)`/g, '<code>$1</code>')
+                // Convert bold text
                 .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                // Convert italic text
                 .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+                // Convert markdown links [text](url) to HTML anchors
+                // Note: Image links are already converted above, so remaining [text](url) patterns are regular links
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+                // Convert newlines to line breaks
                 .replace(/\n/g, '<br>');
 
             return formatted;
