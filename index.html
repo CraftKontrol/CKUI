@@ -1,3 +1,21 @@
+<!-- Secret API Key - Remove before deploying to production -->
+<!-- This is for development purposes only -->
+<script>
+    // Development API key - DO NOT USE IN PRODUCTION
+    const SECRET_API_KEY = '3xoiQg6JBpI8ZSl6DiqLHRhL5sJ1CF90';
+    
+    // Auto-fill API key for development (remove in production)
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            const apiKeyInput = document.getElementById('apiKey');
+            if (apiKeyInput && SECRET_API_KEY !== 'your-secret-api-key-here') {
+                apiKeyInput.value = SECRET_API_KEY;
+                sessionStorage.setItem('mistralApiKey', SECRET_API_KEY);
+            }
+        }
+    });
+</script>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +33,7 @@
         </div>
     </header>
 
-    <div class="api-key-section">
+    <div class="api-key-section" style="display: none;">
         <label for="apiKey">Mistral API Key:</label>
         <input type="password" id="apiKey" placeholder="Enter your Mistral API key..." />
         <span class="hint">

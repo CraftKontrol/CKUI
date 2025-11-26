@@ -272,7 +272,7 @@ body {
     font-family: inherit;
     resize: none;
     min-height: 48px;
-    max-height: 150px;
+    max-height: 200px;
 }
 
 .input-wrapper textarea:focus {
