@@ -7,7 +7,10 @@ app = Flask(__name__)
 CORS(app)
 
 # API key stored server-side only (never sent to client)
-MISTRAL_API_KEY = os.environ.get('MISTRAL_API_KEY', 'your-api-key-here')
+MISTRAL_API_KEY = os.environ.get('MISTRAL_API_KEY')
+
+if not MISTRAL_API_KEY:
+    raise RuntimeError('MISTRAL_API_KEY environment variable is required')
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -29,11 +32,14 @@ def chat():
         return jsonify(response.json()), response.status_code
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f'Error in chat endpoint: {str(e)}')
+        return jsonify({'error': 'An internal error occurred. Please try again later.'}), 500
 
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({'status': 'healthy'}), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host=host, port=port)

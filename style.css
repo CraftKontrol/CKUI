@@ -87,51 +87,7 @@ body {
 }
 
 
-/* API Key Section */
-.api-key-section {
-    background: var(--surface-color);
-    padding: 1rem 2rem;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.api-key-section label {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-.api-key-section input {
-    flex: 1;
-    min-width: 200px;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0;
-    background: var(--background-color);
-    color: var(--text-color);
-    font-size: 0.9rem;
-}
-
-.api-key-section input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-}
-
-.api-key-section .hint {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-.api-key-section a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-
-.api-key-section a:hover {
-    text-decoration: underline;
-}
+/* API Key Section - Removed (not used since API key is now handled server-side) */
 
 .footer a   {
     color: var(--primary-color);
@@ -394,12 +350,6 @@ body {
 @media (max-width: 768px) {
     .header {
         padding: 0.75rem 1rem;
-    }
-
-    .api-key-section {
-        padding: 0.75rem 1rem;
-        flex-direction: column;
-        align-items: stretch;
     }
 
     .chat-container {
