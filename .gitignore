@@ -1,1 +1,4 @@
 /CKUI.wiki/
+.env
+__pycache__/
+*.pyc
