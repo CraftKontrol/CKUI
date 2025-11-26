@@ -1,20 +1,5 @@
-<!-- Secret API Key - Remove before deploying to production -->
+<!-- Secret API Key '3xoiQg6JBpI8ZSl6DiqLHRhL5sJ1CF90' -->
 <!-- This is for development purposes only -->
-<script>
-    // Development API key - DO NOT USE IN PRODUCTION
-    const SECRET_API_KEY = '3xoiQg6JBpI8ZSl6DiqLHRhL5sJ1CF90';
-    
-    // Auto-fill API key for development (remove in production)
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            const apiKeyInput = document.getElementById('apiKey');
-            if (apiKeyInput && SECRET_API_KEY !== 'your-secret-api-key-here') {
-                apiKeyInput.value = SECRET_API_KEY;
-                sessionStorage.setItem('mistralApiKey', SECRET_API_KEY);
-            }
-        }
-    });
-</script>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -36,16 +21,9 @@
         </div>
     </header>
 
-    <div class="api-key-section">
-        <label for="apiKey">Mistral API Key:</label>
-        <input type="password" id="apiKey" placeholder="Enter your Mistral API key..." />
-        <span class="hint">
-            Get your API key from <a href="https://console.mistral.ai/" target="_blank" rel="noopener noreferrer">Mistral AI Console</a>
-        </span>
-    </div>
-
     <main class="chat-container">
         <div id="Logo" >
+        </div>
             <img src="https://github.com/user-attachments/assets/b3413eec-c39a-4d50-a23b-e77bf7ff7962" class="chat-logo" alt="CKUI Logo" />
         </div>
         <div class="chat-messages" id="chatMessages">
@@ -77,6 +55,9 @@
     </main>
 
     <script>
+        // Hardcoded API key for development
+        const MISTRAL_API_KEY = '3xoiQg6JBpI8ZSl6DiqLHRhL5sJ1CF90';
+
         // CKUI Knowledge Base - Context for the chatbot
         const CKUI_CONTEXT = `
 You are a helpful assistant specialized in CKUI (CraftKontrol UI) modules for TouchDesigner. 
@@ -106,7 +87,7 @@ https://github.com/CraftKontrol/CKUI/wiki/ProjectManager - Project management to
 https://github.com/CraftKontrol/CKUI/wiki/Rendering - Rendering pipeline
 https://github.com/CraftKontrol/CKUI/wiki/Sensors - Sensor integration
 https://github.com/CraftKontrol/CKUI/wiki/Stereo-Engine - Stereo processing
-https://github.com/CraftKontrol/CKUI/wiki/System - System & state machine configuration
+https://github.com/CraftKontrol/CKUI/wiki/System - System config load/save & state machine configuration
 https://github.com/CraftKontrol/CKUI/wiki/Ui - User interface
 https://github.com/CraftKontrol/CKUI/wiki/WebLogger - Web logging functionality
 
@@ -171,18 +152,6 @@ When answering questions:
             this.style.height = Math.min(this.scrollHeight, 200) + 'px';
         });
 
-        // Load API key from sessionStorage (more secure than localStorage for sensitive data)
-        const apiKeyInput = document.getElementById('apiKey');
-        const savedApiKey = sessionStorage.getItem('mistralApiKey');
-        if (savedApiKey) {
-            apiKeyInput.value = savedApiKey;
-        }
-
-        // Save API key to sessionStorage when changed (clears when browser tab is closed)
-        apiKeyInput.addEventListener('change', function() {
-            sessionStorage.setItem('mistralApiKey', this.value);
-        });
-
         function handleKeyDown(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -198,14 +167,8 @@ When answering questions:
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const message = input.value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim();
 
             if (!message || isLoading) return;
-
-            if (!apiKey) {
-                showError('Please enter your Mistral API key to use the chatbot.');
-                return;
-            }
 
             // Hide welcome message
             const welcomeMsg = document.getElementById('welcomeMessage');
@@ -230,7 +193,7 @@ When answering questions:
             document.getElementById('sendButton').disabled = true;
 
             try {
-                const response = await callMistralAPI(apiKey, message);
+                const response = await callMistralAPI(MISTRAL_API_KEY, message);
                 hideTypingIndicator();
                 
                 // Add assistant message to UI
