@@ -17,7 +17,7 @@
         </div>
     </header>
 
-    <section class="api-key-section">
+    <section class="api-key-section" id="apiKeySection">
         <label for="apiKey">Mistral API Key:</label>
         <input type="password" id="apiKey" placeholder="Enter your Mistral API key..." />
         <div class="api-key-controls">
@@ -31,7 +31,7 @@
         <span class="hint">Get your API key from <a href="https://console.mistral.ai/" target="_blank" rel="noopener noreferrer">Mistral AI Console</a></span>
     </section>
 
-    <div class="security-notice">
+    <div class="security-notice" id="securityNotice">
         <p><strong>🔒 Security Notice:</strong> Your API key is stored locally in your browser's localStorage and is only sent to Mistral AI servers. Clear saved keys on shared computers.</p>
     </div>
 
@@ -116,6 +116,19 @@ When answering questions:
 
         let conversationHistory = [];
         let isLoading = false;
+        const MIN_API_KEY_LENGTH = 10;
+
+        // Hide API key section and security notice
+        function hideApiKeySection() {
+            document.getElementById('apiKeySection').style.display = 'none';
+            document.getElementById('securityNotice').style.display = 'none';
+        }
+
+        // Show API key section and security notice
+        function showApiKeySection() {
+            document.getElementById('apiKeySection').style.display = 'block';
+            document.getElementById('securityNotice').style.display = 'block';
+        }
 
         // Load saved API key from localStorage on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -127,6 +140,15 @@ When answering questions:
             } else {
                 updateSavedKeyIndicator(false);
             }
+
+            // Hide API key section when user enters a key (more than MIN_API_KEY_LENGTH characters)
+            document.getElementById('apiKey').addEventListener('input', function() {
+                if (this.value.length > MIN_API_KEY_LENGTH) {
+                    hideApiKeySection();
+                } else {
+                    showApiKeySection();
+                }
+            });
         });
 
         // Update the saved key indicator visibility
@@ -136,6 +158,7 @@ When answering questions:
             if (hasSavedKey) {
                 indicator.style.display = 'inline';
                 clearBtn.style.display = 'inline-block';
+                hideApiKeySection();
             } else {
                 indicator.style.display = 'none';
                 clearBtn.style.display = 'none';
@@ -148,6 +171,7 @@ When answering questions:
             document.getElementById('apiKey').value = '';
             document.getElementById('rememberKey').checked = false;
             updateSavedKeyIndicator(false);
+            showApiKeySection();
         }
 
         // Map wiki topics to URLs
@@ -227,6 +251,9 @@ When answering questions:
                 localStorage.setItem('mistralApiKey', apiKey);
                 updateSavedKeyIndicator(true);
             }
+
+            // Hide API key section after first message
+            hideApiKeySection();
 
             // Hide welcome message
             const welcomeMsg = document.getElementById('welcomeMessage');
