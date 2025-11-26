@@ -21,7 +21,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CKUI Support - TouchDesigner Troubleshooting Assistant</title>
+    <title>CKUI Support - Help Troubleshooting Assistant</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -29,11 +29,14 @@
         <div class="logo">CK</div>
         <div class="header-title">
             <h1>CKUI Support Assistant</h1>
-            <p>TouchDesigner Troubleshooting Chatbot</p>
+            <p>Help Troubleshooting Chatbot ... Also Cooking Assistant</p>
+        </div>
+        <div class="credits">
+            <span>Artcraft Visuals © 2025</span>
         </div>
     </header>
 
-    <div class="api-key-section" style="display: none;">
+    <div class="api-key-section">
         <label for="apiKey">Mistral API Key:</label>
         <input type="password" id="apiKey" placeholder="Enter your Mistral API key..." />
         <span class="hint">
@@ -42,9 +45,12 @@
     </div>
 
     <main class="chat-container">
+        <div id="Logo" >
+            <img src="https://github.com/user-attachments/assets/b3413eec-c39a-4d50-a23b-e77bf7ff7962" class="chat-logo" alt="CKUI Logo" />
+        </div>
         <div class="chat-messages" id="chatMessages">
             <div class="welcome-message" id="welcomeMessage">
-                <h2>👋 Welcome to CKUI Support</h2>
+                <h2>Welcome to the AI CKUI Support</h2>
                 <p>I'm here to help you troubleshoot CKUI modules for TouchDesigner.</p>
                 <p>Ask me anything about CKUI setup, configuration, or issues you're facing.</p>
             </div>
@@ -62,6 +68,11 @@
                     Send
                 </button>
             </div>
+        </div>
+        <div class="footer">
+            <p>Arnaud Cassone © Artcraft Visuals 2025</p>
+            <p>CKUI is part of the CKLib library</p>
+            <a href="http://wwww.artcraft-zone.com" target="_blank" rel="noopener noreferrer">www.artcraft-zone.com</a>
         </div>
     </main>
 
@@ -156,7 +167,7 @@ When answering questions:
         const textarea = document.getElementById('userInput');
         textarea.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
         });
 
         // Load API key from sessionStorage (more secure than localStorage for sensitive data)

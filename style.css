@@ -1,8 +1,8 @@
 :root {
     --primary-color: #0d4fff;
-    --primary-dark: #0a3ecc;
+    --primary-dark: #4780c1;
     --secondary-color: #404040;
-    --background-color: #404040;
+    --background-color: #242424;
     --surface-color: #4d4d4d;
     --text-color: #e8e8e8;
     --text-muted: #888;
@@ -36,6 +36,13 @@ body {
     gap: 1rem;
 }
 
+#Logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 1rem;
+}
+
 .logo {
     width: 40px;
     height: 40px;
@@ -48,6 +55,14 @@ body {
     font-size: 1.2rem;
 }
 
+.chat-logo{
+    display: flex;
+    text-align: center;
+    margin-bottom: 1rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
 .header-title {
     flex: 1;
 }
@@ -61,6 +76,16 @@ body {
     font-size: 0.85rem;
     color: var(--text-muted);
 }
+
+.footer {
+    text-align: center;
+    padding: 1rem 2rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-color);
+    margin-top: 1rem;
+}
+
 
 /* API Key Section */
 .api-key-section {
@@ -107,6 +132,12 @@ body {
 .api-key-section a:hover {
     text-decoration: underline;
 }
+
+.footer a   {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+    
 
 /* Main Chat Area */
 .chat-container {
@@ -356,6 +387,7 @@ body {
     padding: 1rem;
     margin: 0.5rem 0;
     color: var(--error-color);
+    
 }
 
 /* Responsive */
