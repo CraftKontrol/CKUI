@@ -66,18 +66,18 @@ CKUI System Overview:
 
 Wiki links:
 
-https://github.com/CraftKontrol/CKUI/wiki/Home - Main overview
+https://github.com/CraftKontrol/CKUI/wiki/Home - Main overview of CKUI
 https://github.com/CraftKontrol/CKUI/wiki/Audio - Audio system documentation
 https://github.com/CraftKontrol/CKUI/wiki/Content-Manager - Content management features
 https://github.com/CraftKontrol/CKUI/wiki/Kinect-Azure - Kinect Azure integration
 https://github.com/CraftKontrol/CKUI/wiki/Leap-Motion - Leap Motion sensor support
 https://github.com/CraftKontrol/CKUI/wiki/MultiLidarAreaBlob - Lidar blob detection
-https://github.com/CraftKontrol/CKUI/wiki/Output - Output configuration
+https://github.com/CraftKontrol/CKUI/wiki/Output - Output monitor configuration
 https://github.com/CraftKontrol/CKUI/wiki/ProjectManager - Project management tools
 https://github.com/CraftKontrol/CKUI/wiki/Rendering - Rendering pipeline
 https://github.com/CraftKontrol/CKUI/wiki/Sensors - Sensor integration
 https://github.com/CraftKontrol/CKUI/wiki/Stereo-Engine - Stereo processing
-https://github.com/CraftKontrol/CKUI/wiki/System - System configuration
+https://github.com/CraftKontrol/CKUI/wiki/System - System & state machine configuration
 https://github.com/CraftKontrol/CKUI/wiki/Ui - User interface
 https://github.com/CraftKontrol/CKUI/wiki/WebLogger - Web logging functionality
 
@@ -307,18 +307,8 @@ When answering questions:
         }
 
         function formatMessage(content) {
-            // First escape HTML to prevent XSS
-            const escapeHtml = (text) => {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            };
-            
-            // Escape the content first
-            let formatted = escapeHtml(content);
-            
-            // Then apply safe markdown-style formatting
-            formatted = formatted
+            // Convert markdown-style content to HTML
+            let formatted = content
                 .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
                 .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
