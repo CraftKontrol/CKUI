@@ -1,13 +1,12 @@
-
 :root {
-    --primary-color: #0088ff;
-    --primary-dark: #0066cc;
-    --secondary-color: #1a1a2e;
-    --background-color: #0f0f1a;
-    --surface-color: #16213e;
+    --primary-color: #0d4fff;
+    --primary-dark: #0a3ecc;
+    --secondary-color: #404040;
+    --background-color: #404040;
+    --surface-color: #4d4d4d;
     --text-color: #e8e8e8;
     --text-muted: #888;
-    --border-color: #2a2a4a;
+    --border-color: #666666;
     --error-color: #ff4444;
     --success-color: #44ff88;
 }
@@ -41,7 +40,7 @@ body {
     width: 40px;
     height: 40px;
     background: var(--primary-color);
-    border-radius: 8px;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -84,7 +83,7 @@ body {
     min-width: 200px;
     padding: 0.5rem 1rem;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 0;
     background: var(--background-color);
     color: var(--text-color);
     font-size: 0.9rem;
@@ -153,7 +152,7 @@ body {
 .message-avatar {
     width: 36px;
     height: 36px;
-    border-radius: 50%;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -173,7 +172,7 @@ body {
 .message-content {
     background: var(--surface-color);
     padding: 0.75rem 1rem;
-    border-radius: 12px;
+    border-radius: 0;
     line-height: 1.5;
 }
 
@@ -192,7 +191,7 @@ body {
 .message-content code {
     background: rgba(0, 0, 0, 0.3);
     padding: 0.15rem 0.4rem;
-    border-radius: 4px;
+    border-radius: 0;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.9em;
 }
@@ -200,7 +199,7 @@ body {
 .message-content pre {
     background: rgba(0, 0, 0, 0.3);
     padding: 0.75rem;
-    border-radius: 6px;
+    border-radius: 0;
     overflow-x: auto;
     margin: 0.5rem 0;
 }
@@ -227,7 +226,7 @@ body {
     width: 8px;
     height: 8px;
     background: var(--text-muted);
-    border-radius: 50%;
+    border-radius: 0;
     animation: bounce 1.4s infinite ease-in-out both;
 }
 
@@ -252,7 +251,7 @@ body {
 .input-container {
     padding: 1rem;
     background: var(--surface-color);
-    border-radius: 12px;
+    border-radius: 0;
     margin-top: auto;
 }
 
@@ -266,7 +265,7 @@ body {
     flex: 1;
     padding: 0.75rem 1rem;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 0;
     background: var(--background-color);
     color: var(--text-color);
     font-size: 1rem;
@@ -290,7 +289,7 @@ body {
     background: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 1rem;
     font-weight: 500;
@@ -337,7 +336,7 @@ body {
     padding: 0.5rem 1rem;
     background: var(--surface-color);
     border: 1px solid var(--border-color);
-    border-radius: 20px;
+    border-radius: 0;
     color: var(--text-color);
     cursor: pointer;
     font-size: 0.9rem;
@@ -346,14 +345,14 @@ body {
 
 .quick-action:hover {
     border-color: var(--primary-color);
-    background: rgba(0, 136, 255, 0.1);
+    background: rgba(13, 79, 255, 0.1);
 }
 
 /* Error Message */
 .error-message {
     background: rgba(255, 68, 68, 0.1);
     border: 1px solid var(--error-color);
-    border-radius: 8px;
+    border-radius: 0;
     padding: 1rem;
     margin: 0.5rem 0;
     color: var(--error-color);
@@ -391,7 +390,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
     background: var(--border-color);
-    border-radius: 4px;
+    border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
