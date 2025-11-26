@@ -1,6 +1,3 @@
-<!-- Secret API Key '3xoiQg6JBpI8ZSl6DiqLHRhL5sJ1CF90' -->
-<!-- This is for development purposes only -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,6 +16,24 @@
             <span>Artcraft Visuals © 2025</span>
         </div>
     </header>
+
+    <section class="api-key-section">
+        <label for="apiKey">Mistral API Key:</label>
+        <input type="password" id="apiKey" placeholder="Enter your Mistral API key..." />
+        <div class="api-key-controls">
+            <label class="remember-key-label">
+                <input type="checkbox" id="rememberKey" />
+                Remember API Key
+            </label>
+            <button class="clear-key-button" id="clearKeyBtn" onclick="clearSavedApiKey()">Clear Saved Key</button>
+        </div>
+        <span class="saved-key-indicator" id="savedKeyIndicator">✓ Using saved key</span>
+        <span class="hint">Get your API key from <a href="https://console.mistral.ai/" target="_blank" rel="noopener noreferrer">Mistral AI Console</a></span>
+    </section>
+
+    <div class="security-notice">
+        <p><strong>🔒 Security Notice:</strong> Your API key is stored locally in your browser's localStorage and is only sent to Mistral AI servers. Clear saved keys on shared computers.</p>
+    </div>
 
     <main class="chat-container">
         <div id="Logo" >
@@ -54,9 +69,6 @@
     </main>
 
     <script>
-        // Hardcoded API key for development
-        const MISTRAL_API_KEY = '3xoiQg6JBpI8ZSl6DiqLHRhL5sJ1CF90';
-
         // CKUI Knowledge Base - Context for the chatbot
         const CKUI_CONTEXT = `
 You are a helpful assistant specialized in CKUI (CraftKontrol UI) modules for TouchDesigner. 
@@ -104,6 +116,39 @@ When answering questions:
 
         let conversationHistory = [];
         let isLoading = false;
+
+        // Load saved API key from localStorage on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedApiKey = localStorage.getItem('mistralApiKey');
+            if (savedApiKey) {
+                document.getElementById('apiKey').value = savedApiKey;
+                document.getElementById('rememberKey').checked = true;
+                updateSavedKeyIndicator(true);
+            } else {
+                updateSavedKeyIndicator(false);
+            }
+        });
+
+        // Update the saved key indicator visibility
+        function updateSavedKeyIndicator(hasSavedKey) {
+            const indicator = document.getElementById('savedKeyIndicator');
+            const clearBtn = document.getElementById('clearKeyBtn');
+            if (hasSavedKey) {
+                indicator.style.display = 'inline';
+                clearBtn.style.display = 'inline-block';
+            } else {
+                indicator.style.display = 'none';
+                clearBtn.style.display = 'none';
+            }
+        }
+
+        // Clear saved API key from localStorage
+        function clearSavedApiKey() {
+            localStorage.removeItem('mistralApiKey');
+            document.getElementById('apiKey').value = '';
+            document.getElementById('rememberKey').checked = false;
+            updateSavedKeyIndicator(false);
+        }
 
         // Map wiki topics to URLs
         const CKUI_WIKI_TOPICS = {
@@ -166,8 +211,22 @@ When answering questions:
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const message = input.value.trim();
+            const apiKeyInput = document.getElementById('apiKey');
+            const apiKey = apiKeyInput.value.trim();
+
+            if (!apiKey) {
+                showError('Please enter your Mistral API key to continue.');
+                return;
+            }
 
             if (!message || isLoading) return;
+
+            // Save API key if remember checkbox is checked
+            const rememberKey = document.getElementById('rememberKey').checked;
+            if (rememberKey) {
+                localStorage.setItem('mistralApiKey', apiKey);
+                updateSavedKeyIndicator(true);
+            }
 
             // Hide welcome message
             const welcomeMsg = document.getElementById('welcomeMessage');
@@ -192,7 +251,7 @@ When answering questions:
             document.getElementById('sendButton').disabled = true;
 
             try {
-                const response = await callMistralAPI(MISTRAL_API_KEY, message);
+                const response = await callMistralAPI(apiKey, message);
                 hideTypingIndicator();
                 
                 // Add assistant message to UI
