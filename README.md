@@ -24,31 +24,17 @@ This repository provides an AI-powered support assistant specifically designed t
 
 The assistant provides accurate answers based exclusively on the official CKUI documentation and includes direct links to relevant wiki sections for further reading.
 
-## Overview
 
-This repository contains the CKUI System, a comprehensive user interface framework designed for interactive installations and applications. The CKUI system is part of the CKLib library, providing a complete set of tools for building interactive experiences using TouchDesigner.
+## CKUI Project Manager
 
-## Features
+The CKUI Project Manager is a powerful tool for organizing and managing your CKUI projects. It provides a centralized interface for:
 
-- User interface framework for interactive installations
-- Integration with various input devices and modules
-- Comprehensive documentation and setup guides
-- Part of the larger CKLib ecosystem
+- **Project Creation**: Set up new CKUI projects with predefined templates and configurations
+- **Asset Management**: Organize media files, textures, and resources across your projects
+- **Module Integration**: Easily add and configure CKUI modules within your project structure
+- **Version Control**: Track changes and maintain project versions for better workflow management
+- **Export/Import**: Share project configurations and settings between different CKUI installations
 
-## Getting Started
+For detailed setup instructions and advanced features, refer to the WIKI section in the CKUI [documentation](https://github.com/CraftKontrol/CKUI/wiki/).
 
-This repository includes:
-- Documentation and setup instructions
-- Configuration guides for input devices
-- Usage examples and best practices
-- Module integration resources
-
-## Requirements
-
-- TouchDesigner
-- CKLib library
-
-## Documentation
-
-Detailed documentation and resources can be found in the wiki folder, including setup procedures, configuration options, and usage guidelines for the CKUI System.
 
