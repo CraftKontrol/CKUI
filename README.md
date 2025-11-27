@@ -17,7 +17,7 @@ This repository provides an AI-powered support assistant specifically designed t
 
 ### How to Use
 
-1. Open the CKUI Support Assistant web interface
+1. Open the CKUI Support Assistant web interface : [CKUI Support Assistant](https://craftkontrol.github.io/CKUI/)
 2. Enter your Mistral AI API key (get one from [Mistral AI Console](https://console.mistral.ai/))
 3. Ask questions about any CKUI module or troubleshooting issue
 4. Receive detailed, step-by-step guidance with relevant wiki links
