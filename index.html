@@ -219,30 +219,46 @@ When answering questions:
             showApiKeySection();
         }
 
-        // Map wiki topics to URLs
+        // Map wiki topics to URLs with aliases for better matching
         const CKUI_WIKI_TOPICS = {
-            "audio": "Audio",
-            "content manager": "Content-Manager",
             "kinect azure": "Kinect-Azure",
+            "kinect": "Kinect-Azure",  // Add alias
             "leap motion": "Leap-Motion",
+            "leap": "Leap-Motion",  // Add alias
+            "content manager": "Content-Manager",
+            "audio": "Audio",
+            "sound": "Audio",  // Add alias
             "multilidarareablob": "MultiLidarAreaBlob",
+            "lidar": "MultiLidarAreaBlob",  // Add alias
             "output": "Output",
+            "monitor": "Output",  // Add alias
             "project manager": "ProjectManager",
             "rendering": "Rendering",
+            "render": "Rendering",  // Add alias
             "sensors": "Sensors",
+            "sensor": "Sensors",  // Add alias
             "stereo engine": "Stereo-Engine",
+            "stereo": "Stereo-Engine",  // Add alias
             "system": "System",
             "ui": "Ui",
-            "web logger": "WebLogger"
+            "interface": "Ui",  // Add alias
+            "web logger": "WebLogger",
+            "logger": "WebLogger",  // Add alias
+            "log": "WebLogger"  // Add alias
         };
 
-        // Util: Find matching wiki topic(s) - returns array of topics
+        // Util: Find matching wiki topic(s) - returns array of unique topics
         function findWikiTopics(query) {
             const lowerQuery = query.toLowerCase();
-            const matchedTopics = Object.keys(CKUI_WIKI_TOPICS).filter((key) =>
-                lowerQuery.includes(key)
-            );
-            return matchedTopics.map(topic => CKUI_WIKI_TOPICS[topic]);
+            const matchedPages = new Set(); // Use Set to avoid duplicates
+            
+            Object.keys(CKUI_WIKI_TOPICS).forEach((key) => {
+                if (lowerQuery.includes(key)) {
+                    matchedPages.add(CKUI_WIKI_TOPICS[key]);
+                }
+            });
+            
+            return Array.from(matchedPages);
         }
 
         // Util: Find single matching wiki topic (for backward compatibility)
@@ -303,9 +319,12 @@ When answering questions:
                         content: content,
                         images: images
                     };
+                } else {
+                    console.warn(`Failed to fetch wiki page: ${page}`);
+                    return { content: '', images: [] };
                 }
-                return { content: '', images: [] };
-            } catch {
+            } catch (error) {
+                console.error(`Error fetching wiki page ${page}:`, error);
                 return { content: '', images: [] };
             }
         }
