@@ -74,13 +74,13 @@ class ProjectManagerExt:
 				venvPythonVersion = result.stdout.strip()
 				op.Logger.Info(me, f"Virtual environment Python version: {venvPythonVersion}")
 			except Exception as e:
-				op.Logger.Warning(me, f"Failed to get Python version from venv: {e}")
+				op.Logger.Info(me, f"Failed to get Python version from venv: {e}")
 				venvPythonVersion = 'Unknown'
 		
 			self.VenvStatus = venvPythonVersion  + " in /" + venvFolder
 			self.VenvPythonExe = os.path.join(venvFolder, 'Scripts', 'python.exe')
 		else:
-			op.Logger.Warning(me,"Virtual environment not found at: {}".format(venvFolder))
+			op.Logger.Info(me,"Virtual environment not found at: {}".format(venvFolder))
 			self.VenvStatus = 'not Found'
 
 		# set main project name to the Overall CKUI System name
