@@ -71,8 +71,16 @@
     <script>
         // CKUI Knowledge Base - Context for the chatbot
         const CKUI_CONTEXT = `
-You are a helpful assistant specialized in CKUI (CraftKontrol UI) modules for TouchDesigner. 
+You are a helpful assistant specialized in CKUI (CraftKontrol UI) modules for TouchDesigner.
 You help users troubleshoot and understand the CKUI System.
+
+CRITICAL INSTRUCTIONS:
+- ONLY provide information that is explicitly stated in the provided wiki content
+- If the answer is not in the wiki content, respond with: "I don't have information about that in the CKUI documentation. Please check the wiki at https://github.com/CraftKontrol/CKUI/wiki/"
+- DO NOT invent, assume, or extrapolate information beyond what's documented
+- DO NOT make up parameter names, features, or configuration options
+- ALWAYS cite the specific wiki section you're referencing
+- If uncertain, ask the user to clarify or point them to the relevant wiki page
 
 CKUI System Overview:
 - CKUI is a user interface framework designed for interactive installations an performances in TouchDesigner
@@ -106,19 +114,16 @@ Wiki images are included to illustrate setup and configuration steps.
 images are located at their original URLs on the wiki pages.
 
 When answering questions:
-- Read all the relevant wiki sections before answering.
-- Only respond when directly asked questions about CKUI.
-- Base all answers exclusively on the provided wiki pages parameters and topics.
-- ALWAYS provide step-by-step numbered instructions when explaining how to do something. Use numbered lists (1., 2., 3., etc.) for sequential steps.
-- Preserve and display code snippets using <pre><code> tags for proper formatting.
-- Always include relevant links to wiki sections in <a href= for further reading.
-- Do not use markdown format in your answers. Use HTML tags instead.
-- Keep responses focused and accurate to the documentation.
-- When wiki content includes images, include them in your response to help illustrate the instructions.
-- Include images from the wiki content when available using HTML img tags: <img src="URL" alt="description">
-- use the original image URLs from the wiki without modification.
-
-
+- Read all the relevant wiki sections before answering
+- ONLY respond with information directly from the provided wiki content
+- If the wiki doesn't contain the answer, explicitly say so
+- Base all answers EXCLUSIVELY on the provided wiki pages parameters and topics
+- ALWAYS provide step-by-step numbered instructions when explaining how to do something
+- Quote or paraphrase directly from the wiki when possible
+- Include relevant wiki links for verification
+- Preserve and display code snippets using <pre><code> tags
+- Do not use markdown format in your answers. Use HTML tags instead
+- Include images from the wiki content when available using HTML img tags
 `;
 
         let conversationHistory = [];
@@ -378,13 +383,23 @@ When answering questions:
 
         // Updated to inject wiki content before API call, if relevant
         // Now supports multiple wiki topics and includes images
+        // When no specific topic is detected, fetches the Home page as default context
+        // For general CKUI questions, includes all available wiki pages
         async function callMistralAPI(apiKey, userMessage) {
             let wikiReferences = [];
             let wikiContext = '';
             let wikiImages = [];
 
             // 1. Detect if the user is referencing wiki topic(s) - now supports multiple topics
-            const topicPages = findWikiTopics(userMessage);
+            let topicPages = findWikiTopics(userMessage);
+            
+            // Check if this is a general question about CKUI
+            const lowerMessage = userMessage.toLowerCase();
+            const isGeneralQuestion = lowerMessage.includes('ckui') || 
+                                      lowerMessage.includes('what is') || 
+                                      lowerMessage.includes('how does') ||
+                                      lowerMessage.includes('overview') ||
+                                      lowerMessage.includes('getting started');
             
             if (topicPages.length > 0) {
                 // Fetch content for all matched topics
@@ -396,11 +411,29 @@ When answering questions:
                 wikiReferences = topicPages.map(page => 
                     `https://github.com/CraftKontrol/CKUI/wiki/${page}`
                 );
-                
-                if (wikiContext) {
-                    // Increased context size limit from 3000 to 8000 characters
-                    wikiContext = wikiContext.slice(0, 8000);
-                }
+            } else if (isGeneralQuestion) {
+                // For general CKUI questions, fetch all available wiki pages
+                const allPages = Object.values(CKUI_WIKI_TOPICS);
+                allPages.unshift('Home'); // Add Home page first
+                const wikiResult = await fetchMultipleWikiContents(allPages);
+                wikiContext = wikiResult.content;
+                wikiImages = wikiResult.images;
+                topicPages = allPages;
+                wikiReferences = allPages.map(page => 
+                    `https://github.com/CraftKontrol/CKUI/wiki/${page}`
+                );
+            } else {
+                // No specific topic detected, fetch the Home page as default context
+                const wikiResult = await fetchWikiContent('Home');
+                wikiContext = wikiResult.content;
+                wikiImages = wikiResult.images;
+                topicPages = ['Home'];
+                wikiReferences = ['https://github.com/CraftKontrol/CKUI/wiki/Home'];
+            }
+            
+            // Limit wiki context to 15000 characters
+            if (wikiContext) {
+                wikiContext = wikiContext.slice(0, 15000);
             }
 
             // Build image context for the AI
@@ -412,13 +445,17 @@ When answering questions:
                 });
             }
 
+            // Build the system message with wiki context and validation reminder
+            const validationReminder = '\n\nIMPORTANT REMINDER: Your response MUST be grounded in the provided wiki content above. Do NOT hallucinate or invent information. If the answer is not in the wiki content, say so explicitly.';
+            
+            const systemContent = CKUI_CONTEXT + 
+                `\n\nCKUI Wiki Content for "${topicPages.join(', ')}":\n\n${wikiContext}${imageContext}\n\nWiki References: ${wikiReferences.join(', ')}` +
+                validationReminder;
+
             const messages = [
                 {
                     role: 'system',
-                    content: CKUI_CONTEXT + (wikiContext
-                        ? `\n\nCKUI Wiki Content for "${topicPages.join(', ')}":\n\n${wikiContext}${imageContext}\n\nWiki References: ${wikiReferences.join(', ')}\n`
-                        : ''
-                    )
+                    content: systemContent
                 },
                 ...conversationHistory
             ];
