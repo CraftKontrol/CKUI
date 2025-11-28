@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CKUI Support - Help Troubleshooting Assistant - c6fa9c8</title>
+    <title>CKUI Support - Help Troubleshooting Assistant</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,6 +14,9 @@
         </div>
         <div class="credits">
             <span>Artcraft Visuals © 2025</span>
+        </div>
+        <div class="last-modified">
+            <span id="lastModified">Loading...</span>
         </div>
     </header>
 
@@ -137,6 +140,31 @@ When answering questions:
             document.getElementById('securityNotice').style.display = 'block';
         }
 
+        // Fetch and display last modified date
+        async function fetchLastModified() {
+            function formatDate(date) {
+                return `Last updated: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+            }
+
+            try {
+                const response = await fetch('index.html', { method: 'HEAD' });
+                const lastModified = response.headers.get('Last-Modified');
+                
+                if (lastModified) {
+                    const date = new Date(lastModified);
+                    document.getElementById('lastModified').textContent = formatDate(date);
+                } else {
+                    // Fallback: use document.lastModified
+                    const docDate = new Date(document.lastModified);
+                    document.getElementById('lastModified').textContent = formatDate(docDate);
+                }
+            } catch (error) {
+                // Fallback to document.lastModified
+                const docDate = new Date(document.lastModified);
+                document.getElementById('lastModified').textContent = formatDate(docDate);
+            }
+        }
+
         // Load saved API key from localStorage on page load
         document.addEventListener('DOMContentLoaded', function() {
             const savedApiKey = localStorage.getItem('mistralApiKey');
@@ -156,6 +184,9 @@ When answering questions:
                     showApiKeySection();
                 }
             });
+
+            // Call the function when page loads
+            fetchLastModified();
         });
 
         // Update the saved key indicator visibility
