@@ -129,6 +129,7 @@ When answering questions:
         let conversationHistory = [];
         let isLoading = false;
         const MIN_API_KEY_LENGTH = 10;
+        const WIKI_CONTEXT_LIMIT = 15000;
 
         // Hide API key section and security notice
         function hideApiKeySection() {
@@ -431,9 +432,9 @@ When answering questions:
                 wikiReferences = ['https://github.com/CraftKontrol/CKUI/wiki/Home'];
             }
             
-            // Limit wiki context to 15000 characters
+            // Limit wiki context to avoid exceeding API limits
             if (wikiContext) {
-                wikiContext = wikiContext.slice(0, 15000);
+                wikiContext = wikiContext.slice(0, WIKI_CONTEXT_LIMIT);
             }
 
             // Build image context for the AI
