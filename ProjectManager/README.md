@@ -1,5 +1,5 @@
 ﻿# Project Manager
-## Version 1.031
+## Version 1.032
 ### Author: Arnaud Cassone © Artcraft Visuals
 It's a TouchDesigner project configurator tool that helps manage project dependencies, configurations, and repositories. 
 It provides an easy way to set up and maintain a TouchDesigner projects with the necessary packages and settings.
@@ -24,6 +24,10 @@ It does the following:
 |Systeminfos|Header||
 |Ipaddress1|Str||
 |Ipaddress2|Str||
+|Ipaddress3|Str||
+|Ipaddress4|Str||
+|Ipaddress5|Str||
+|Ipaddress6|Str||
 |Librariesheader|Header||
 |Libraries|Folder||
 |Ckui|Str||

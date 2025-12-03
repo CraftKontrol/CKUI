@@ -114,6 +114,7 @@ class ProjectManagerExt:
 		self.SetColors()
 		op.Logger.Info(me,"Project Manager Ready.") 
 		self.State = 'Ready'
+		op('DelayedStartup').run(delayFrames=1)
 		pass
 	
 	def GetLocalIP(self):
