@@ -2,7 +2,7 @@
 ## Version 1.002
 ### Author: Arnaud Cassone © Artcraft Visuals
 
-<img width="320" height="133" alt="CKUI_Logo" src="https://github.com/user-attachments/assets/b3413eec-c39a-4d50-a23b-e77bf7ff7962" />
+<img width="320" height="133" alt="CKUI official logo - Artcraft Visuals branding for the TouchDesigner-based UI framework and project management system" src="https://github.com/user-attachments/assets/b3413eec-c39a-4d50-a23b-e77bf7ff7962" />
 
 ## CKUI Support Assistant
 
