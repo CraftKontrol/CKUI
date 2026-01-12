@@ -66,22 +66,39 @@ class ProjectManagerExt:
 		
 		# check if venv is active
 		venvFolder = parent().par.Venvfolder.eval()
-		if os.path.exists(venvFolder):
+		
+		# Convert to absolute path if relative
+		if venvFolder and not os.path.isabs(venvFolder):
+			venvFolder = os.path.abspath(os.path.join(project.folder, venvFolder))
+			
+		if venvFolder and os.path.exists(venvFolder):
+			
 			op.Logger.Info(me,"Virtual environment folder found at: {}".format(venvFolder))
 			try:
+				# Try Scripts subfolder first (Windows venv), then root (embedded Python)
 				venvPythonExe = os.path.join(venvFolder, 'Scripts', 'python.exe')
-				result = subprocess.run([venvPythonExe, '--version'], capture_output=True, text=True, check=True)
-				venvPythonVersion = result.stdout.strip()
-				op.Logger.Info(me, f"Virtual environment Python version: {venvPythonVersion}")
+				if not os.path.exists(venvPythonExe):
+					venvPythonExe = os.path.join(venvFolder, 'python.exe')
+					
+				if os.path.exists(venvPythonExe):
+					result = subprocess.run([venvPythonExe, '--version'], capture_output=True, text=True, check=True)
+					venvPythonVersion = result.stdout.strip()
+					op.Logger.Info(me, f"Virtual environment Python version: {venvPythonVersion}")
+					self.VenvPythonExe = venvPythonExe
+				else:
+					op.Logger.Warning(me, f"Python executable not found in venv: {venvFolder}")
+					venvPythonVersion = 'Not Found'
+					self.VenvPythonExe = 'Unknown'
 			except Exception as e:
 				op.Logger.Info(me, f"Failed to get Python version from venv: {e}")
 				venvPythonVersion = 'Unknown'
+				self.VenvPythonExe = 'Unknown'
 		
-			self.VenvStatus = venvPythonVersion  + " in /" + venvFolder
-			self.VenvPythonExe = os.path.join(venvFolder, 'Scripts', 'python.exe')
+			self.VenvStatus = venvPythonVersion  + " in " + venvFolder
 		else:
 			op.Logger.Info(me,"Virtual environment not found at: {}".format(venvFolder))
 			self.VenvStatus = 'not Found'
+			self.VenvPythonExe = 'Unknown'
 
 		# set main project name to the Overall CKUI System name
 		if op('/project1') is not None:
@@ -504,14 +521,63 @@ class ProjectManagerExt:
 	def PipInstallPackage(self, packageName):
 		# Install the specified package in the virtual environment
 		packageName = str(packageName)
-		if self.VenvPythonExe == 'Unknown':
-			op.Logger.Warning(me,"Virtual environment Python executable not found.")
+		
+		venvFolder = parent().par.Venvfolder.eval()
+		
+		# Convert to absolute path if relative
+		if not os.path.isabs(venvFolder):
+			venvFolder = os.path.abspath(os.path.join(project.folder, venvFolder))
+		
+		# Try both possible locations for python.exe (venv root and Scripts subfolder)
+		pythonExe = os.path.join(venvFolder, 'Scripts', 'python.exe')
+		if not os.path.exists(pythonExe):
+			pythonExe = os.path.join(venvFolder, 'python.exe')
+		
+		if not os.path.exists(pythonExe):
+			op.Logger.Warning(me,"Python executable not found in venv at: {}".format(venvFolder))
 			return
+			
 		try:
-			subprocess.run([self.VenvPythonExe, '-m', 'pip', 'install', packageName], check=True)
+			subprocess.run([pythonExe, '-m', 'pip', 'install', packageName], check=True)
 			op.Logger.Info(me,"Package {} installed successfully in virtual environment.".format(packageName))
 		except Exception as e:
 			op.Logger.Error(me,"Failed to install package {}: {}".format(packageName, e))
+
+	def PipInstallRequirements(self):
+		# Install packages from Assets/Python/requirements.txt
+		venvFolder = parent().par.Venvfolder.eval()
+		
+		# Convert to absolute path if relative
+		if not os.path.isabs(venvFolder):
+			venvFolder = os.path.abspath(os.path.join(project.folder, venvFolder))
+		
+		# Try both possible locations for python.exe (venv root and Scripts subfolder)
+		pythonExe = os.path.join(venvFolder, 'Scripts', 'python.exe')
+		if not os.path.exists(pythonExe):
+			pythonExe = os.path.join(venvFolder, 'python.exe')
+		
+		if not os.path.exists(pythonExe):
+			op.Logger.Warning(me,"Python executable not found in venv at: {}".format(venvFolder))
+			return
+			
+		requirementsPath = os.path.join(project.folder, 'Assets', 'Python', 'requirements.txt')
+		if not os.path.exists(requirementsPath):
+			op.Logger.Warning(me,"requirements.txt file not found at: {}".format(requirementsPath))
+			return
+		
+		op.Logger.Info(me,"Installing from: {}".format(requirementsPath))
+		op.Logger.Info(me,"Using Python: {}".format(pythonExe))
+		
+		try:
+			subprocess.run([pythonExe, '-m', 'pip', 'install', '-r', requirementsPath], check=True)
+			op.Logger.Info(me,"Packages from requirements.txt installed successfully in virtual environment.")
+		except Exception as e:
+			op.Logger.Error(me,"Failed to install packages from requirements.txt: {}".format(e))
+
+		
+
+
+
 
 	def SetColors(self):
 		# Set colors of all nodes in the project to CKUIColor
